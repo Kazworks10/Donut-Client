@@ -38,6 +38,11 @@ movement. No anti-cheat evasion, no packet spoofing, no xray.
 ### Also included
 - **InventoryManager** — auto-drops filler blocks during long sessions
 - **HudOverlay** — corner-anchored FPS / coordinates / module list
+- **AutoTool** — hotbar-swaps to the best tool for the block you attack
+- **Sprint** — always sprinting (native implementation)
+- **FullBright** — full brightness, restores your gamma on disable
+- **AutoSell** — runs the Donut SMP `/sell` menu loop with vanilla slot clicks
+- **AutoLog** — disconnects on low health or nearby players; respects the server combat tag
 - **Profiles** — named presets plus `.donutprofile` JSON export/import
 - **Config** — human-readable TOML with hot-reload (edit `config.toml` while playing)
   and automatic version migration (v1 → v2)

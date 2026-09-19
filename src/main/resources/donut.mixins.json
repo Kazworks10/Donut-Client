@@ -3,7 +3,8 @@
   "package": "com.donut.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "KeyboardInputMixin"
+    "KeyboardInputMixin",
+    "SimpleOptionAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

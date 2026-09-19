@@ -9,6 +9,7 @@ public enum Category {
     RENDER("Render", 0xFF5AB0E1),
     PLAYER("Player", 0xFFB78AE0),
     WORLD("World", 0xFFE0B25A),
+    DONUT_SMP("Donut SMP", 0xFFE17AB8),
     MISC("Misc", 0xFF9AA3B2);
 
     public final String displayName;

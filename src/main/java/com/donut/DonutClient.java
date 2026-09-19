@@ -9,11 +9,16 @@ import com.donut.gui.clickgui.ClickGUI;
 import com.donut.gui.hud.HudRenderer;
 import com.donut.module.Module;
 import com.donut.module.ModuleManager;
+import com.donut.module.modules.AutoLog;
 import com.donut.module.modules.AutoMine;
+import com.donut.module.modules.AutoSell;
+import com.donut.module.modules.AutoTool;
+import com.donut.module.modules.FullBright;
 import com.donut.module.modules.HudOverlay;
 import com.donut.module.modules.InventoryManager;
 import com.donut.module.modules.PathfinderModule;
 import com.donut.module.modules.SchematicBuilder;
+import com.donut.module.modules.Sprint;
 import com.donut.pathfinding.MovementInputOverride;
 import com.donut.rotation.RotationManager;
 import com.donut.schematic.GhostRenderer;
@@ -65,8 +70,14 @@ public final class DonutClient implements ClientModInitializer {
         PathfinderModule pathfinder = new PathfinderModule();
         InventoryManager inventory = new InventoryManager();
         HudOverlay hudModule = new HudOverlay();
+        AutoTool autoTool = new AutoTool();
+        Sprint sprint = new Sprint();
+        FullBright fullBright = new FullBright();
+        AutoSell autoSell = new AutoSell();
+        AutoLog autoLog = new AutoLog();
 
-        for (Module m : new Module[]{autoMine, builderModule, pathfinder, inventory, hudModule}) {
+        for (Module m : new Module[]{autoMine, builderModule, pathfinder, inventory, hudModule,
+                autoTool, sprint, fullBright, autoSell, autoLog}) {
             modules.register(m);
             m.setBus(bus);
         }
