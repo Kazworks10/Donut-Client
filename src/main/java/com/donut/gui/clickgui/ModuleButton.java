@@ -26,6 +26,9 @@ public final class ModuleButton {
             SettingComponent c = SettingComponent.forSetting(s);
             if (c != null) components.add(c);
         }
+        for (Module.Action a : module.actions()) {
+            components.add(new SettingComponent.ActionButton(a));
+        }
     }
 
     public boolean isExpanded() {

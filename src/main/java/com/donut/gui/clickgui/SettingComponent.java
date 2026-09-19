@@ -1,5 +1,6 @@
 package com.donut.gui.clickgui;
 
+import com.donut.module.Module;
 import com.donut.module.settings.BooleanSetting;
 import com.donut.module.settings.ColorSetting;
 import com.donut.module.settings.EnumSetting;
@@ -350,6 +351,42 @@ public abstract class SettingComponent {
                     }
                 }
                 open = false;
+            }
+            return false;
+        }
+    }
+
+    // ---- Action button (Module.Action) --------------------------------------
+
+    /** Clickable command row; renders like the other widgets, runs on click. */
+    public static final class ActionButton extends SettingComponent {
+        private final Module.Action action;
+
+        public ActionButton(Module.Action action) {
+            super(null); // not tied to a Setting
+            this.action = action;
+        }
+
+        @Override
+        public boolean visible() {
+            return true;
+        }
+
+        @Override
+        public void render(DrawContext g, int mouseX, int mouseY, float delta) {
+            boolean hover = inside(mouseX, mouseY);
+            GuiRender.roundRect(g, x + 2, y + 1, w - 4, H - 3, 4, hover ? Theme.ROW_HOVER : Theme.INPUT_BG);
+            GuiRender.outline(g, x + 2, y + 1, w - 4, H - 3, Theme.OUTLINE);
+            String label = "\u25B8 " + action.name;
+            GuiRender.text(g, GuiRender.trim(label, w - 12),
+                    x + (w - GuiRender.textWidth(label)) / 2, y + 3, hover ? Theme.ACCENT : Theme.TEXT, false);
+        }
+
+        @Override
+        public boolean mouseClicked(double mx, double my, int button) {
+            if (button == 0 && inside(mx, my)) {
+                action.run();
+                return true;
             }
             return false;
         }

@@ -5,6 +5,8 @@ import com.donut.event.events.TickEvent;
 import com.donut.module.settings.KeybindSetting;
 import com.donut.module.settings.Settings;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -20,6 +22,7 @@ public abstract class Module {
     private final String description;
     private final Category category;
     protected final Settings settings = new Settings();
+    private final List<Action> actions = new ArrayList<>();
     public final KeybindSetting keybind;
 
     private boolean enabled;
@@ -101,10 +104,20 @@ public abstract class Module {
         listen(TickEvent.class, e -> onTick());
     }
 
+    /** Registers a momentary command shown as a button in the settings panel. */
+    protected final void addAction(String name, Runnable run) {
+        actions.add(new Action(name, run));
+    }
+
     // ---- accessors -------------------------------------------------------
 
     public final String name() {
         return name;
+    }
+
+    /** Momentary commands (buttons); separate from persistent {@link #settings}. */
+    public final List<Action> actions() {
+        return actions;
     }
 
     public final String description() {
@@ -126,5 +139,20 @@ public abstract class Module {
     @Override
     public final String toString() {
         return name;
+    }
+
+    /** A one-shot command exposed as a GUI button (e.g. "Start Here"). */
+    public static final class Action {
+        public final String name;
+        private final Runnable run;
+
+        public Action(String name, Runnable run) {
+            this.name = name;
+            this.run = run;
+        }
+
+        public void run() {
+            run.run();
+        }
     }
 }

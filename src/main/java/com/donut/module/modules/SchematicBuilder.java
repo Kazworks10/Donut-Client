@@ -24,10 +24,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Builds a schematic file at the marked origin. Placement is rate-limited and
- * goes through the vanilla interaction path; walking between placements is
- * handled by simple steering toward the current target (no auto-scaffold).
- * Progress is persisted so a disconnect can resume the same build.
+ * Builds a schematic file at the player's position ("Start Here" action in the
+ * GUI, or a bound keybind). Placement is rate-limited and goes through the
+ * vanilla interaction path; walking between placements is handled by simple
+ * steering toward the current target (no auto-scaffold). Progress persists so a
+ * disconnect can resume the same build; Reset Session clears it.
  */
 public final class SchematicBuilder extends Module {
     public enum Mode { LAYER, SPIRAL, NEAREST }
@@ -58,6 +59,13 @@ public final class SchematicBuilder extends Module {
         settings.add(blocksPerMinute);
         settings.add(persist);
         settings.add(walkToTargets);
+        addAction("Start Here", this::startHereAction);
+        addAction("Reset Session", this::resetSession);
+    }
+
+    /** GUI trigger: loads the schematic and builds at the player's position. */
+    private void startHereAction() {
+        startHere(MinecraftClient.getInstance());
     }
 
     @Override
@@ -82,23 +90,32 @@ public final class SchematicBuilder extends Module {
         if (client.player == null || schematicsDir == null || loading) return;
         loading = true;
         status = "loading " + file.get() + "...";
+        final String name = file.get().trim();
+        final BlockPos spawn = BlockPos.ofFloored(client.player.getPos());
+        final int ox = spawn.getX();
+        final int oy = spawn.getY();
+        final int oz = spawn.getZ();
         CompletableFuture.supplyAsync(() -> {
             try {
-                Path resolved = schematicsDir.resolve(file.get().trim());
+                Path resolved = schematicsDir.resolve(name);
                 if (!Files.exists(resolved)) throw new java.io.IOException("file not found: " + resolved);
                 SchematicData data = SchematicFormat.parse(resolved);
                 BuildSession prior = persist.get()
-                        ? BuildSession.load(schematicsDir, file.get().trim()) : null;
+                        ? BuildSession.load(schematicsDir, name, ox, oy, oz) : null;
                 return new Object[]{data, prior};
             } catch (Exception e) {
                 return new Object[]{e};
             }
-        }).whenComplete((r, t) -> {
+        }).whenComplete((r, t) -> client.execute(() -> {
             loading = false;
             if (r.length == 1) {
                 status = "load failed: "
                         + (r[0] instanceof Exception ex && ex.getMessage() != null
                                 ? ex.getMessage() : r[0].toString());
+                return;
+            }
+            if (client.player == null) { // left the world while parsing
+                status = "load failed: left the world";
                 return;
             }
             schematic = (SchematicData) r[0];
@@ -112,11 +129,11 @@ public final class SchematicBuilder extends Module {
                 engine.setIndex(Math.min(session.index, plan.size()));
                 status = "resumed at " + session.index + "/" + plan.size();
             } else {
-                session = new BuildSession(file.get().trim(), origin.getX(), origin.getY(), origin.getZ(),
+                session = new BuildSession(name, origin.getX(), origin.getY(), origin.getZ(),
                         mode.get().name().toLowerCase(), 0);
                 status = "started " + plan.size() + " blocks";
             }
-        });
+        }));
     }
 
     /** Stops building and persists the session. */
@@ -128,14 +145,6 @@ public final class SchematicBuilder extends Module {
             session.save(schematicsDir);
         }
         status = "stopped at " + (session != null ? session.index : 0);
-    }
-
-    /** Sets origin to the player's current position (used before starting). */
-    public void markOrigin(MinecraftClient client) {
-        if (client.player != null) {
-            origin = BlockPos.ofFloored(client.player.getPos());
-            status = "origin marked at " + origin;
-        }
     }
 
     @Override
@@ -185,8 +194,13 @@ public final class SchematicBuilder extends Module {
         return engine.plan().get(engine.index());
     }
 
-    /** Clears the stored session (called from the GUI "reset" action). */
-    public void clearSession() {
+    /** Clears the session in memory and on disk so Start Here begins fresh. */
+    public void resetSession() {
+        stop();
+        if (session != null && schematicsDir != null) {
+            BuildSession.delete(schematicsDir, session.schematicPath,
+                    session.originX, session.originY, session.originZ);
+        }
         session = null;
         schematic = null;
         engine.stop();

@@ -55,7 +55,15 @@ public final class BuildSession {
 
     /** Loads the most recent session for this schematic, or null. */
     public static BuildSession load(Path schematicsDir, String schematicPath) {
-        Path file = schematicsDir.resolve(".progress").resolve(sessionName(schematicPath, 0, 0, 0));
+        return load(schematicsDir, schematicPath, 0, 0, 0);
+    }
+
+    /**
+     * Loads the session saved for this schematic + origin (origin-only lookup
+     * kept for callers that do not know the origin). Returns null if none.
+     */
+    public static BuildSession load(Path schematicsDir, String schematicPath, int ox, int oy, int oz) {
+        Path file = schematicsDir.resolve(".progress").resolve(sessionName(schematicPath, ox, oy, oz));
         if (!Files.exists(file)) return null;
         try {
             String line = Files.readString(file, StandardCharsets.UTF_8).trim();
@@ -67,6 +75,16 @@ public final class BuildSession {
         } catch (IOException | NumberFormatException e) {
             System.err.println("[Donut] Failed to read build session: " + e);
             return null;
+        }
+    }
+
+    /** Deletes the saved session for this schematic + origin, if any. */
+    public static boolean delete(Path schematicsDir, String schematicPath, int ox, int oy, int oz) {
+        try {
+            return Files.deleteIfExists(schematicsDir.resolve(".progress")
+                    .resolve(sessionName(schematicPath, ox, oy, oz)));
+        } catch (IOException e) {
+            return false;
         }
     }
 
