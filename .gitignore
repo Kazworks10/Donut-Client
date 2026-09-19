@@ -1,0 +1,34 @@
+# Gradle
+.gradle/
+build/
+out/
+classes/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# Fabric / Loom
+run/
+remappedSrc/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# User configs with local state
+run/config/
+schematics/local/
+*.donutprofile.bak
+
+# Local tooling (Freebuff thread artifacts)
+.freebuff/
+dontut-dashboard.html
+donut-dashboard.html

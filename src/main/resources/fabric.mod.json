@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "donut",
+  "version": "${version}",
+  "name": "Donut Client",
+  "description": "Utility client with a ClickGUI, schematic builder, pathfinding and auto-mine. Client-side only; no anti-cheat evasion features.",
+  "authors": [],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.donut.DonutClient"
+    ]
+  },
+  "mixins": [
+    "donut.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}
