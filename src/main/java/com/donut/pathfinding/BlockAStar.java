@@ -1,5 +1,7 @@
 package com.donut.pathfinding;
 
+import com.donut.util.Pos3Key;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -90,7 +92,7 @@ final class BlockAStar {
     }
 
     private static long key(int x, int y, int z) {
-        return ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (long) (y & 0xFFF);
+        return Pos3Key.pack(x, y, z);
     }
 
     /** Returns waypoints (excluding start, including goal area) or null on failure/timeout. */

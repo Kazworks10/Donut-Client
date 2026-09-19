@@ -1,5 +1,6 @@
 package com.donut.pathfinding;
 
+import com.donut.mining.MovementSteering;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -106,7 +107,7 @@ public final class PathExecutor {
                 && f > 0.85f && (path.size() - index) > 4;
         player.setSprinting(sprint);
 
-        MovementInputOverride.set(f, s, jump, false, sprint);
+        MovementSteering.applyLocal(f, s, jump, false, sprint);
 
         // Look toward the waypoint (real camera rotation; modules may queue fancier turns)
         RotationManagerCompat.look(client, targetCenter);

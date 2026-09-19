@@ -1,5 +1,7 @@
 package com.donut.mining;
 
+import com.donut.util.Pos3Key;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -71,9 +73,9 @@ public final class VeinMiner {
         return list.toArray(new int[0][]);
     }
 
-    /** Stable position packing shared with tests. */
+    /** Stable position packing, shared via {@link Pos3Key}. */
     public static long key(int x, int y, int z) {
-        return ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (long) (y & 0xFFF);
+        return Pos3Key.pack(x, y, z);
     }
 
     /** Attempts a vein block gets at visibility/reach validation before it is skipped. */

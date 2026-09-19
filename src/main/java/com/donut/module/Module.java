@@ -73,6 +73,14 @@ public abstract class Module {
     protected void onTick() {
     }
 
+    /**
+     * Optional HUD line while the module is active (e.g. current activity).
+     * Default is null — no line. Called on the client/render thread.
+     */
+    public String statusLine() {
+        return null;
+    }
+
     final void tick() {
         if (enabled) onTick();
     }

@@ -6,6 +6,7 @@ import com.donut.module.settings.BooleanSetting;
 import com.donut.module.settings.EnumSetting;
 import com.donut.module.settings.NumberSetting;
 import com.donut.module.settings.StringSetting;
+import com.donut.mining.MovementSteering;
 import com.donut.pathfinding.MovementInputOverride;
 import com.donut.schematic.BuildSession;
 import com.donut.schematic.GhostRenderer;
@@ -163,7 +164,8 @@ public final class SchematicBuilder extends Module {
         double distSq = client.player.getEyePos().squaredDistanceTo(Vec3d.ofCenter(target));
         double maxRange = 4.5 * 4.5;
         if (walkToTargets.get() && distSq > maxRange) {
-            steerToward(client, target);
+            MovementInputOverride.begin();
+            MovementSteering.steerToward(client, client.player, Vec3d.ofCenter(target));
         } else {
             MovementInputOverride.end();
             boolean placed = engine.tick(client, blocksPerMinute.floatValue(), origin);
@@ -179,25 +181,6 @@ public final class SchematicBuilder extends Module {
     private int[] currentCell() {
         if (engine.plan() == null || engine.index() >= engine.plan().size()) return null;
         return engine.plan().get(engine.index());
-    }
-
-    /** Very simple steering: face the target and press forward; jump for steps. */
-    private void steerToward(MinecraftClient client, BlockPos target) {
-        var player = client.player;
-        Vec3d center = Vec3d.ofCenter(target);
-        double dx = center.x - player.getX();
-        double dz = center.z - player.getZ();
-        double horiz = Math.sqrt(dx * dx + dz * dz);
-        if (horiz > 1.0) {
-            float wantYaw = (float) Math.toDegrees(Math.atan2(dz, dx)) - 90f;
-            float dyaw = com.donut.rotation.RotationUtils.delta(player.getYaw(), wantYaw);
-            player.setYaw(player.getYaw() + com.donut.rotation.RotationUtils.wrapDegrees(dyaw * 0.3f));
-            boolean jump = client.world.getBlockState(client.player.getBlockPos().up()).isReplaceable()
-                    && client.world.getBlockState(client.player.getBlockPos().up(2)).isReplaceable()
-                    && client.world.getBlockState(client.player.getBlockPos().down()).isSolidBlock(client.world, client.player.getBlockPos());
-            MovementInputOverride.begin();
-            MovementInputOverride.set(1f, 0f, jump, false, false);
-        }
     }
 
     /** Clears the stored session (called from the GUI "reset" action). */

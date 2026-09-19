@@ -1,5 +1,7 @@
 package com.donut.schematic;
 
+import com.donut.util.Pos3Key;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -98,6 +100,6 @@ public final class PlacementPlanner {
     }
 
     private static long key(int x, int y, int z) {
-        return ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (long) (y & 0xFFF);
+        return Pos3Key.pack(x, y, z);
     }
 }
