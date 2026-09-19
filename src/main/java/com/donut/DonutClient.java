@@ -16,6 +16,7 @@ import com.donut.module.modules.PathfinderModule;
 import com.donut.module.modules.SchematicBuilder;
 import com.donut.pathfinding.MovementInputOverride;
 import com.donut.rotation.RotationManager;
+import com.donut.schematic.GhostRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -76,6 +77,7 @@ public final class DonutClient implements ClientModInitializer {
         builderModule.setSchematicsDir(FabricLoader.getInstance().getGameDir().resolve("schematics"));
 
         hud = new HudRenderer(modules, hudModule);
+        GhostRenderer.initialize();
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onEndTick);
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {

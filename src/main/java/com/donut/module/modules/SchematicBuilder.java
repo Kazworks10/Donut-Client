@@ -8,6 +8,7 @@ import com.donut.module.settings.NumberSetting;
 import com.donut.module.settings.StringSetting;
 import com.donut.pathfinding.MovementInputOverride;
 import com.donut.schematic.BuildSession;
+import com.donut.schematic.GhostRenderer;
 import com.donut.schematic.PlacementEngine;
 import com.donut.schematic.PlacementPlanner;
 import com.donut.schematic.SchematicData;
@@ -118,6 +119,7 @@ public final class SchematicBuilder extends Module {
     /** Stops building and persists the session. */
     public void stop() {
         engine.stop();
+        GhostRenderer.clear();
         if (session != null && schematicsDir != null && persist.get()) {
             session.index = engine.index();
             session.save(schematicsDir);
@@ -141,6 +143,9 @@ public final class SchematicBuilder extends Module {
 
     @Override
     protected void onTick() {
+        // Publish build state for the ghost preview (no-op when not building)
+        GhostRenderer.update(engine.plan(), engine.index(), origin);
+
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.world == null || schematic == null || engine.isDone()) {
             if (schematic != null && engine.isDone()) {
@@ -200,6 +205,7 @@ public final class SchematicBuilder extends Module {
         session = null;
         schematic = null;
         engine.stop();
+        GhostRenderer.clear();
         status = "session cleared";
     }
 }
