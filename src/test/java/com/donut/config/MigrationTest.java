@@ -75,4 +75,26 @@ class MigrationTest {
         assertEquals(99, root.get("version"));
         assertEquals("keep-me", root.get("custom"));
     }
+
+    /** Careless hand-edits must be tolerated, not crash the client. */
+    @Test
+    void carelessHandEditsAreTolerated() {
+        Map<String, Object> root = new LinkedHashMap<>();
+        root.put("version", 1);
+        Map<String, Object> modules = new LinkedHashMap<>();
+        Map<String, Object> automine = new LinkedHashMap<>();
+        automine.put("Mode", "banana");        // unknown enum value
+        automine.put("Speed (BPM)", "abc");    // unparsable number
+        automine.put("Reach", "");             // empty number
+        automine.put("Keybind", "not-a-key");  // unparsable keybind
+        automine.put("Vein Size", 99999);       // numeric JSON form
+        modules.put("AutoMine", automine);
+        root.put("modules", modules);
+        Map<String, Object> gui = new LinkedHashMap<>();
+        gui.put("key", "not-a-number");
+        root.put("gui", gui);
+
+        Migration.migrate(root);
+        assertEquals(2, root.get("version"));
+    }
 }

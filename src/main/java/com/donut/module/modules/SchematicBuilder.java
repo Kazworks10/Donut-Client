@@ -96,7 +96,9 @@ public final class SchematicBuilder extends Module {
         }).whenComplete((r, t) -> {
             loading = false;
             if (r.length == 1) {
-                status = "load failed: " + r[0];
+                status = "load failed: "
+                        + (r[0] instanceof Exception ex && ex.getMessage() != null
+                                ? ex.getMessage() : r[0].toString());
                 return;
             }
             schematic = (SchematicData) r[0];

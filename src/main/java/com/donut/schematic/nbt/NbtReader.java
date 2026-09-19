@@ -24,6 +24,9 @@ public final class NbtReader {
             TAG_FLOAT = 5, TAG_DOUBLE = 6, TAG_BYTE_ARRAY = 7, TAG_STRING = 8, TAG_LIST = 9,
             TAG_COMPOUND = 10, TAG_INT_ARRAY = 11, TAG_LONG_ARRAY = 12;
 
+    /** Recursion guard: real NBT never nests this deep; corrupt/hostile files would overflow the stack. */
+    static final int MAX_DEPTH = 512;
+
     private final DataInputStream in;
 
     private NbtReader(DataInputStream in) {
@@ -43,25 +46,41 @@ public final class NbtReader {
 
     /** Reads the root compound (with its name) and closes the stream. */
     public NbtCompound readRoot() throws IOException {
-        int type = in.readUnsignedByte();
-        if (type != TAG_COMPOUND) throw new IOException("Root tag is not a compound: " + type);
-        String name = readString();
-        NbtCompound root = readCompoundBody();
-        in.close();
-        return root;
-    }
-
-    private NbtCompound readCompoundBody() throws IOException {
-        NbtCompound compound = new NbtCompound();
-        while (true) {
+        try {
             int type = in.readUnsignedByte();
-            if (type == TAG_END) return compound;
-            String key = readString();
-            compound.put(key, readPayload(type));
+            if (type != TAG_COMPOUND) throw new IOException("Root tag is not a compound: " + type);
+            String name = readString();
+            NbtCompound root = readCompoundBody(0);
+            in.close();
+            return root;
+        } catch (EOFException e) {
+            throw new IOException("Unexpected end of file at the NBT root — file is truncated or not NBT", e);
         }
     }
 
-    private Object readPayload(int type) throws IOException {
+    private NbtCompound readCompoundBody(int depth) throws IOException {
+        if (depth > MAX_DEPTH) throw new IOException("NBT nesting deeper than " + MAX_DEPTH);
+        NbtCompound compound = new NbtCompound();
+        while (true) {
+            int type;
+            try {
+                type = in.readUnsignedByte();
+            } catch (EOFException e) {
+                throw new IOException("Unexpected end of file inside a compound (truncated NBT)", e);
+            }
+            if (type == TAG_END) return compound;
+            String key = null;
+            try {
+                key = readString();
+                compound.put(key, readPayload(type, depth));
+            } catch (EOFException e) {
+                throw new IOException("Unexpected end of file while reading tag '"
+                        + (key == null ? "<name>" : key) + "' (tag type " + type + ")", e);
+            }
+        }
+    }
+
+    private Object readPayload(int type, int depth) throws IOException {
         return switch (type) {
             case TAG_BYTE -> in.readByte();
             case TAG_SHORT -> in.readShort();
@@ -71,8 +90,8 @@ public final class NbtReader {
             case TAG_DOUBLE -> in.readDouble();
             case TAG_BYTE_ARRAY -> readByteArray();
             case TAG_STRING -> readString();
-            case TAG_LIST -> readList();
-            case TAG_COMPOUND -> readCompoundBody();
+            case TAG_LIST -> readList(depth);
+            case TAG_COMPOUND -> readCompoundBody(depth + 1);
             case TAG_INT_ARRAY -> readIntArray();
             case TAG_LONG_ARRAY -> readLongArray();
             default -> throw new IOException("Unknown NBT tag type: " + type);
@@ -90,7 +109,11 @@ public final class NbtReader {
         int len = in.readInt();
         if (len < 0) throw new IOException("Negative byte array length: " + len);
         byte[] out = new byte[len];
-        in.readFully(out);
+        try {
+            in.readFully(out);
+        } catch (EOFException e) {
+            throw new IOException("Unexpected end of file in a byte array of length " + len, e);
+        }
         return out;
     }
 
@@ -98,7 +121,11 @@ public final class NbtReader {
         int len = in.readInt();
         if (len < 0) throw new IOException("Negative int array length: " + len);
         int[] out = new int[len];
-        for (int i = 0; i < len; i++) out[i] = in.readInt();
+        try {
+            for (int i = 0; i < len; i++) out[i] = in.readInt();
+        } catch (EOFException e) {
+            throw new IOException("Unexpected end of file in an int array of length " + len, e);
+        }
         return out;
     }
 
@@ -106,16 +133,26 @@ public final class NbtReader {
         int len = in.readInt();
         if (len < 0) throw new IOException("Negative long array length: " + len);
         long[] out = new long[len];
-        for (int i = 0; i < len; i++) out[i] = in.readLong();
+        try {
+            for (int i = 0; i < len; i++) out[i] = in.readLong();
+        } catch (EOFException e) {
+            throw new IOException("Unexpected end of file in a long array of length " + len, e);
+        }
         return out;
     }
 
-    private NbtList readList() throws IOException {
+    private NbtList readList(int depth) throws IOException {
         int elementType = in.readUnsignedByte();
         int len = in.readInt();
         if (len < 0) throw new IOException("Negative list length: " + len);
         List<Object> values = new ArrayList<>(Math.min(len, 4096));
-        for (int i = 0; i < len; i++) values.add(readPayload(elementType));
+        for (int i = 0; i < len; i++) {
+            try {
+                values.add(readPayload(elementType, depth + 1));
+            } catch (EOFException e) {
+                throw new IOException("Unexpected end of file in list element " + i + "/" + len, e);
+            }
+        }
         return new NbtList(elementType, values);
     }
 
