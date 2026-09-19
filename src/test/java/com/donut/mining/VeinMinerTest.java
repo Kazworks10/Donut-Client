@@ -110,4 +110,53 @@ class VeinMinerTest {
         }
         return -1;
     }
+
+    // ------------------------------------------------------------ RetryBudget
+
+    @Test
+    void retryBudgetSkipsOnlyAfterMaxAttempts() {
+        VeinMiner.RetryBudget budget = new VeinMiner.RetryBudget(VeinMiner.DEFAULT_MAX_ATTEMPTS);
+        long k = VeinMiner.key(1, 2, 3);
+        for (int i = 0; i < VeinMiner.DEFAULT_MAX_ATTEMPTS - 1; i++) {
+            assertTrue(!budget.fail(k), "must not skip before the attempt limit");
+        }
+        assertTrue(budget.fail(k), "exactly the max attempt must skip");
+    }
+
+    @Test
+    void retryBudgetAccountsPositionsIndependently() {
+        VeinMiner.RetryBudget budget = new VeinMiner.RetryBudget(2);
+        long a = VeinMiner.key(0, 0, 0);
+        long b = VeinMiner.key(1, 0, 0);
+        assertTrue(!budget.fail(a), "first of two attempts must not skip");
+        assertEquals(1, budget.failuresOf(a));
+        assertEquals(0, budget.failuresOf(b), "unrelated position must be unaffected");
+        assertTrue(!budget.fail(b), "b's first attempt must not skip either");
+    }
+
+    @Test
+    void retryBudgetClearForgetsOnePosition() {
+        VeinMiner.RetryBudget budget = new VeinMiner.RetryBudget(2);
+        long k = VeinMiner.key(4, 5, 6);
+        budget.fail(k);
+        budget.clear(k);
+        assertEquals(0, budget.failuresOf(k));
+        assertTrue(!budget.fail(k), "after clear the position starts fresh");
+    }
+
+    @Test
+    void retryBudgetResetForgetsEverything() {
+        VeinMiner.RetryBudget budget = new VeinMiner.RetryBudget(1);
+        budget.fail(VeinMiner.key(0, 0, 0));
+        budget.fail(VeinMiner.key(9, 9, 9));
+        budget.reset();
+        assertEquals(0, budget.failuresOf(VeinMiner.key(0, 0, 0)));
+        assertEquals(0, budget.failuresOf(VeinMiner.key(9, 9, 9)));
+    }
+
+    @Test
+    void retryBudgetClampsNonPositiveMax() {
+        VeinMiner.RetryBudget budget = new VeinMiner.RetryBudget(0);
+        assertTrue(budget.fail(VeinMiner.key(1, 1, 1)), "a budget of 0 must still require one attempt");
+    }
 }

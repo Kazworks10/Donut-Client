@@ -3,8 +3,10 @@ package com.donut.mining;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -72,5 +74,43 @@ public final class VeinMiner {
     /** Stable position packing shared with tests. */
     public static long key(int x, int y, int z) {
         return ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (long) (y & 0xFFF);
+    }
+
+    /** Attempts a vein block gets at visibility/reach validation before it is skipped. */
+    public static final int DEFAULT_MAX_ATTEMPTS = 3;
+
+    /**
+     * Pure retry accounting for vein blocks that repeatedly fail validation
+     * (occluded from the camera, out of reach, or no longer the right block).
+     * Once a position exhausts its attempts the module skips it and the vein
+     * continues — one buried block can no longer freeze the whole vein.
+     */
+    public static final class RetryBudget {
+        private final int maxAttempts;
+        private final Map<Long, Integer> failures = new HashMap<>();
+
+        public RetryBudget(int maxAttempts) {
+            this.maxAttempts = Math.max(1, maxAttempts);
+        }
+
+        /** Records a failed validation on {@code key}; true when attempts are exhausted (skip now). */
+        public boolean fail(long key) {
+            return failures.merge(key, 1, Integer::sum) >= maxAttempts;
+        }
+
+        /** Forgets accounting for {@code key} (mined successfully or skipped). */
+        public void clear(long key) {
+            failures.remove(key);
+        }
+
+        /** Forgets all accounting (vein reset, module toggled). */
+        public void reset() {
+            failures.clear();
+        }
+
+        /** Failed attempts recorded so far for {@code key} (exposed for tests). */
+        public int failuresOf(long key) {
+            return failures.getOrDefault(key, 0);
+        }
     }
 }
