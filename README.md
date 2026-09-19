@@ -5,7 +5,7 @@ pathfinding, schematic building and auto-mining — all working through vanilla
 client behavior: real camera rotations, vanilla interaction paths, input-level
 movement. No anti-cheat evasion, no packet spoofing, no xray.
 
-![status](https://img.shields.io/badge/build-passing-brightgreen) ![tests](https://img.shields.io/badge/tests-41%2F41-brightgreen) ![mc](https://img.shields.io/badge/minecraft-1.21.1-blueviolet)
+![status](https://img.shields.io/badge/build-passing-brightgreen) ![tests](https://img.shields.io/badge/tests-70%2F70-brightgreen) ![mc](https://img.shields.io/badge/minecraft-1.21.1-blueviolet)
 
 ## Features
 
@@ -41,6 +41,44 @@ movement. No anti-cheat evasion, no packet spoofing, no xray.
 - **Profiles** — named presets plus `.donutprofile` JSON export/import
 - **Config** — human-readable TOML with hot-reload (edit `config.toml` while playing)
   and automatic version migration (v1 → v2)
+
+## Development setup
+
+**Keep this checkout out of OneDrive / Dropbox / Google Drive.** This project was
+developed inside OneDrive and it caused real failures: OneDrive's sync locks made
+detached `gradlew` launches fail silently, file watchers misfire on synced
+`.gradle` churn, and paths with spaces ("Donut Client") break tools that don't
+quote arguments. The recommended location is a plain local path with no spaces:
+
+```
+C:\Dev\Donut-Client        # Windows (recommended)
+~/dev/donut-client         # macOS / Linux
+```
+
+If your checkout currently lives in a synced folder, move it (don't re-clone) so
+you keep untracked local state like `run/config.toml` and `run/options.txt`, then
+let OneDrive finish syncing the deletion of the old copy.
+
+### Prerequisites
+
+- **JDK 17–25** with `JAVA_HOME` pointing at it — Gradle 9 runs on it directly, and
+  the JDK 21 toolchain for compiling is auto-provisioned on first build. On Windows,
+  set `JAVA_HOME` machine-wide (`setx /M JAVA_HOME ...` from an admin shell) if you
+  ever launch builds outside an interactive shell (Task Scheduler, IDE daemons).
+- **Git** — that's it. No other system dependencies.
+
+### Common commands
+
+| Command | What it does |
+|---|---|
+| `./gradlew build` | Compile + run all tests + produce the mod jar |
+| `./gradlew test` | Headless test suite only (parsers, pathfinding, planning) |
+| `./gradlew runClient` | Launch a dev Minecraft client with the mod loaded |
+| `./gradlew genSources` | Generate decompiled Minecraft sources for browsing |
+
+The first build downloads dependencies and Minecraft assets into `~/.gradle`
+once — this cache is shared by all checkouts on the machine, so a second clone
+(or a move to a new folder) reuses it and builds in seconds.
 
 ## Quick start
 
