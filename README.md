@@ -5,7 +5,7 @@ pathfinding, schematic building and auto-mining — all working through vanilla
 client behavior: real camera rotations, vanilla interaction paths, input-level
 movement. No anti-cheat evasion, no packet spoofing, no xray.
 
-![status](https://img.shields.io/badge/build-passing-brightgreen) ![tests](https://img.shields.io/badge/tests-70%2F70-brightgreen) ![mc](https://img.shields.io/badge/minecraft-1.21.1-blueviolet)
+![status](https://img.shields.io/badge/build-passing-brightgreen) ![tests](https://img.shields.io/badge/tests-98%2F98-brightgreen) ![mc](https://img.shields.io/badge/minecraft-1.21.1-blueviolet)
 
 ## Features
 

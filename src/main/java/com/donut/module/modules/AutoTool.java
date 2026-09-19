@@ -12,6 +12,9 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Swaps to the best hotbar tool for the block you attack, only while the
  * attack key is held — identical trigger to the reference implementation this
@@ -44,19 +47,12 @@ public final class AutoTool extends Module {
         if (state.isAir() || state.isOf(Blocks.BEDROCK)) return;
 
         PlayerInventory inv = client.player.getInventory();
-        int best = -1;
-        double bestSpeed = 0;
+        List<Double> speeds = new ArrayList<>(9);
         for (int slot = 0; slot < 9; slot++) {
-            double speed = miningSpeed(inv.getStack(slot), state);
-            if (speed > bestSpeed) {
-                bestSpeed = speed;
-                best = slot;
-            }
+            speeds.add(miningSpeed(inv.getStack(slot), state));
         }
-        int current = inv.selectedSlot;
-        if (best >= 0 && best != current && miningSpeed(inv.getStack(current), state) < bestSpeed) {
-            inv.selectedSlot = best;
-        }
+        int target = AutoToolSelector.select(new AutoToolSelector.Scores(speeds), inv.selectedSlot);
+        if (target >= 0) inv.selectedSlot = target;
     }
 
     /** Mining speed multiplier, or -1 when the stack is not a suitable tool. */

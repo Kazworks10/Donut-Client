@@ -23,8 +23,9 @@ dependencies {
     // Config: human-readable TOML, bundled into the jar
     modImplementation(include("com.moandjiezana.toml:toml4j:0.7.2")!!)
 
-    // Tests (pure-Java cores are unit-tested headless)
+    // Tests (pure-Java cores are unit-tested headless; fabric-loader-junit wires up MC registries for MC-bound tests)
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("net.fabricmc:fabric-loader-junit:${project.property("loader_version")}")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
 }
 

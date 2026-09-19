@@ -59,8 +59,7 @@ public final class AutoSell extends Module {
     }
 
     private void resolveItem() {
-        String raw = sellItem.get().trim().toLowerCase(Locale.ROOT);
-        if (raw.startsWith("minecraft:")) raw = raw.substring("minecraft:".length());
+        String raw = SellButtons.normalizeItemId(sellItem.get());
         Item resolved = Registries.ITEM.get(Identifier.of("minecraft", raw));
         if (resolved == Items.AIR) {
             item = null;
@@ -226,14 +225,13 @@ public final class AutoSell extends Module {
     }
 
     /** Slot 53 name+lore contains the sell button marker text. */
-    private static boolean isSellButton(ItemStack stack) {
-        if (stack.isEmpty() || stack.isOf(Items.FURNACE)) return false;
+    private boolean isSellButton(ItemStack stack) {
         String label = stack.getName().getString();
         LoreComponent lore = stack.get(DataComponentTypes.LORE);
         if (lore != null) {
             for (Text line : lore.lines()) label += " " + line.getString();
         }
-        return label.toLowerCase(Locale.ROOT).contains("click to sell items");
+        return SellButtons.isSellButton(label, item != null && stack.isOf(item), stack.isEmpty());
     }
 
     private void click(MinecraftClient client, GenericContainerScreenHandler menu, int slotId, SlotActionType type) {

@@ -6,11 +6,6 @@ import com.donut.module.settings.BooleanSetting;
 import com.donut.module.settings.NumberSetting;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.scoreboard.ScoreboardEntry;
-import net.minecraft.scoreboard.Team;
 
 /**
  * Logs out of the server when a panic condition is met, then disables itself:
@@ -71,19 +66,27 @@ public final class AutoLog extends Module {
         boolean dropped = lastHealth >= 0.0 && health + 0.001 < lastHealth;
         lastHealth = health;
 
-        String reason = null;
-        if (dropped && health < healthThreshold.get()) {
-            reason = String.format("health %.1f < %.1f", health, healthThreshold.get());
+        AutoLogDecider.Decision decision = AutoLogDecider.decide(health, dropped,
+                healthThreshold.get(), combatTag.get(),
+                () -> CombatTagScanner.isCombatTagged(client), logoutDelay.get());
+
+        String reason;
+        int delay;
+        if (decision.trigger()) {
+            reason = decision.reason();
+            delay = decision.delayTicks();
         } else if (playersNear.get() && nearbyPlayer(client, playerRange.get())) {
             reason = "player nearby";
-        } else if (dropped && combatTag.get() && isCombatTagged(client)) {
-            reason = "took damage while combat-tagged";
+            delay = AutoLogDecider.delayTicks(logoutDelay.get());
+        } else {
+            reason = null;
+            delay = 0;
         }
 
         if (reason != null) {
             triggeredReason = reason;
             triggered = true;
-            delayTicks = (int) Math.round(logoutDelay.get() * 20);
+            delayTicks = delay;
             if (delayTicks == 0) disconnect(client, reason);
         }
     }
@@ -112,27 +115,4 @@ public final class AutoLog extends Module {
         return false;
     }
 
-    /** True when any visible scoreboard text mentions "combat" (server combat tag). */
-    static boolean isCombatTagged(MinecraftClient client) {
-        Scoreboard sb = client.world.getScoreboard();
-        for (ScoreboardObjective obj : sb.getObjectives()) {
-            if (containsCombat(obj.getName()) || containsCombat(obj.getDisplayName().getString())) return true;
-        }
-        for (ScoreboardDisplaySlot slot : ScoreboardDisplaySlot.values()) {
-            ScoreboardObjective obj = sb.getObjectiveForSlot(slot);
-            if (obj == null) continue;
-            if (containsCombat(obj.getName()) || containsCombat(obj.getDisplayName().getString())) return true;
-            for (ScoreboardEntry entry : sb.getScoreboardEntries(obj)) {
-                if (containsCombat(entry.owner())) return true;
-                Team team = sb.getScoreHolderTeam(entry.owner());
-                if (team != null && (containsCombat(team.getName())
-                        || containsCombat(team.getDisplayName().getString()))) return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean containsCombat(String s) {
-        return s != null && s.toLowerCase(java.util.Locale.ROOT).contains("combat");
-    }
 }
