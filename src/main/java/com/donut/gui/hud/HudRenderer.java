@@ -3,6 +3,7 @@ package com.donut.gui.hud;
 import com.donut.gui.clickgui.GuiRender;
 import com.donut.module.Module;
 import com.donut.module.ModuleManager;
+import com.donut.module.modules.AutoMine;
 import com.donut.module.modules.HudOverlay;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -38,7 +39,13 @@ public final class HudRenderer {
         }
         if (settings.showModules()) {
             List<Module> enabled = modules.enabled();
-            for (Module m : enabled) lines.add(m.name());
+            for (Module m : enabled) {
+                lines.add(m.name());
+                if (m instanceof AutoMine a && settings.showStatus()) {
+                    String s = a.status();
+                    if (s != null) lines.add("  " + s);
+                }
+            }
         }
         if (lines.isEmpty()) return;
 

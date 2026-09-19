@@ -16,6 +16,8 @@ public final class HudOverlay extends Module {
 
     private final EnumSetting<Corner> corner = new EnumSetting<>("Corner", Corner.TOP_LEFT, "HUD anchor");
     private final BooleanSetting showModules = new BooleanSetting("Module List", true, "Show enabled modules");
+    private final BooleanSetting showStatus = new BooleanSetting("Module Status", true,
+            "Show live status under module names (e.g. AutoMine state)");
     private final BooleanSetting showFps = new BooleanSetting("FPS", true, "Show FPS");
     private final BooleanSetting showCoords = new BooleanSetting("Coordinates", true, "Show XYZ");
     private final ColorSetting color = new ColorSetting("Text Color", 0xE8E8F0F0, "HUD text color");
@@ -24,6 +26,7 @@ public final class HudOverlay extends Module {
         super("HudOverlay", "On-screen info overlay", Category.RENDER);
         settings.add(corner);
         settings.add(showModules);
+        settings.add(showStatus);
         settings.add(showFps);
         settings.add(showCoords);
         settings.add(color);
@@ -31,6 +34,10 @@ public final class HudOverlay extends Module {
 
     public boolean showModules() {
         return isEnabled() && showModules.get();
+    }
+
+    public boolean showStatus() {
+        return isEnabled() && showStatus.get();
     }
 
     public boolean showFps() {
